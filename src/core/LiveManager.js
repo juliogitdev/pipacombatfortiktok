@@ -117,7 +117,9 @@ class LiveManager {
 
     client.on('error', (err) => {
       const mensagem = err?.message || err || 'Erro desconhecido do TikTool.';
-      this.emitirLog(instanciaId, { nivel: 'erro', texto: `Alerta: ${mensagem}` });
+      sessao.status = 'OFFLINE';
+      sessao.tiktokConn = null;
+      this.emitirLog(instanciaId, { nivel: 'erro', texto: `Alerta da conexão TikTool: ${mensagem}` });
     });
 
     client.on('chat', (e) => {
