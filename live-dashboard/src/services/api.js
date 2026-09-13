@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5432';
+const BASE_URL = '/api';
 
 export const api = {
   getToken() {

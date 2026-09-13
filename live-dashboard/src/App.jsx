@@ -5,7 +5,7 @@ import {
   Settings2, Trophy, Crown, RotateCcw, Gamepad2 
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 
 // ==================== API SERVICE ====================
 const api = {
