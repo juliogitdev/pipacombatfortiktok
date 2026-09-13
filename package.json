@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test",
-    "postinstall": "prisma generate"
+    "build": "npm install --prefix live-dashboard && npm run build --prefix live-dashboard",
+    "postinstall": "prisma generate && npm run build"
   },
   "keywords": [],
   "author": "",
