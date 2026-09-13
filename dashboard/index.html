@@ -182,12 +182,31 @@
     </div>
   </div>
 
+  <div id="modalEditarInstancia" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-4">
+    <div class="bg-dark-800 border border-zinc-700 w-full max-w-sm rounded-xl p-5 space-y-4">
+      <h3 class="text-sm font-bold text-white">Editar Instância</h3>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Nome de Identificação</label>
+        <input id="editNomeInstancia" type="text" class="w-full bg-dark-850 border border-zinc-700 rounded px-3 py-2 text-sm text-white">
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">TikTok Username (sem @)</label>
+        <input id="editUserTikTok" type="text" class="w-full bg-dark-850 border border-zinc-700 rounded px-3 py-2 text-sm text-white">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="fecharModalEditarInstancia()" class="text-xs px-3 py-2 text-zinc-400 hover:text-white">Cancelar</button>
+        <button onclick="editarInstancia()" class="text-xs bg-sky-600 hover:bg-sky-500 text-white font-semibold px-4 py-2 rounded">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Script Lógico do Dashboard -->
   <script>
     const API_URL = '/api';
     let token = localStorage.getItem('token');
     let instancias = [];
     let instanciaSelecionada = null;
+    let instanciaParaEditar = null;
 
     // Inicialização
     if (token) {
@@ -211,7 +230,7 @@
 
         token = data.token;
         localStorage.setItem('token', token);
-        localStorage.setItem('adminEmail', data.email);
+        localStorage.setItem('adminEmail', data.usuario?.email || data.email || 'Admin');
         iniciarDashboard();
       } catch (err) {
         const el = document.getElementById('erroLogin');
@@ -268,8 +287,10 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <button onclick="selecionarRegras('${inst.id}')" class="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-3 py-1.5 rounded-lg transition">Regras</button>
+            <button onclick="abrirModalEditarInstancia('${inst.id}')" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition">Editar</button>
+            <button onclick="excluirInstancia('${inst.id}')" class="text-xs bg-rose-700 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg transition">Excluir</button>
             ${isOnline 
               ? `<button onclick="pararLive('${inst.id}')" class="text-xs bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg transition">Desconectar</button>`
               : `<button onclick="iniciarLive('${inst.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg transition">Ligar Live</button>`
@@ -356,6 +377,74 @@
       });
 
       fecharModalNovaInstancia();
+      await carregarInstancias();
+    }
+
+    function abrirModalEditarInstancia(id) {
+      const inst = instancias.find(item => item.id === id);
+      if (!inst) return;
+
+      instanciaParaEditar = inst;
+      document.getElementById('editNomeInstancia').value = inst.nome;
+      document.getElementById('editUserTikTok').value = inst.tiktokUsername;
+      document.getElementById('modalEditarInstancia').classList.replace('hidden', 'flex');
+    }
+
+    function fecharModalEditarInstancia() {
+      instanciaParaEditar = null;
+      document.getElementById('modalEditarInstancia').classList.replace('flex', 'hidden');
+    }
+
+    async function editarInstancia() {
+      if (!instanciaParaEditar) return;
+
+      const nome = document.getElementById('editNomeInstancia').value.trim();
+      const tiktokUsername = document.getElementById('editUserTikTok').value.trim();
+
+      if (!nome || !tiktokUsername) {
+        alert('Preencha nome e TikTok Username para editar a instância.');
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/admin/instancias/${instanciaParaEditar.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ nome, tiktokUsername })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.erro || 'Erro ao editar instância.');
+        return;
+      }
+
+      fecharModalEditarInstancia();
+      await carregarInstancias();
+    }
+
+    async function excluirInstancia(id) {
+      const inst = instancias.find(item => item.id === id);
+      if (!inst) return;
+
+      const confirmar = confirm(`Deseja excluir a instância "${inst.nome}"?`);
+      if (!confirmar) return;
+
+      const res = await fetch(`${API_URL}/admin/instancias/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.erro || 'Erro ao excluir instância.');
+        return;
+      }
+
+      if (instanciaSelecionada && instanciaSelecionada.id === id) {
+        instanciaSelecionada = null;
+        document.getElementById('cardRegras').classList.add('hidden');
+      }
+
       await carregarInstancias();
     }
 
