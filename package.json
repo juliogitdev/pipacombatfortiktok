@@ -1,0 +1,28 @@
+{
+  "name": "live-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "tiktok-live-api": "^1.4.9",
+    "tiktok-live-connector": "^2.4.4",
+    "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.3"
+  }
+}

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Gaming Gateway - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
+            dark: { 800: '#18181b', 850: '#121214', 900: '#09090b' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Scrollbar estilizada para o terminal */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #121214; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+  </style>
+</head>
+<body class="bg-dark-900 text-zinc-100 min-h-screen font-sans antialiased flex flex-col">
+
+  <!-- ==================== TELA DE LOGIN ==================== -->
+  <div id="telaLogin" class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-dark-800 border border-zinc-800 p-8 rounded-2xl shadow-2xl">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center font-black text-xl text-white">⚡</div>
+        <div>
+          <h1 class="text-xl font-bold text-white">Live Gateway</h1>
+          <p class="text-xs text-zinc-400">Painel de Controle Multi-Instâncias</p>
+        </div>
+      </div>
+
+      <form id="formLogin" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">E-mail</label>
+          <input id="loginEmail" type="email" value="admin@live.com" required class="w-full bg-dark-850 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Senha</label>
+          <input id="loginSenha" type="password" value="admin123" required class="w-full bg-dark-850 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
+        </div>
+        <p id="erroLogin" class="text-xs text-rose-500 hidden"></p>
+        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-lg text-sm transition flex justify-center items-center gap-2">
+          Acessar Painel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== PAINEL PRINCIPAL ==================== -->
+  <div id="painelPrincipal" class="hidden flex-1 flex flex-col">
+    <!-- Topbar -->
+    <header class="border-b border-zinc-800 bg-dark-850 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center font-black text-white">⚡</div>
+        <span class="font-bold text-white tracking-wide">LIVE GATEWAY</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span id="labelAdminEmail" class="text-xs text-zinc-400"></span>
+        <button onclick="logout()" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-md text-zinc-300 transition">Sair</button>
+      </div>
+    </header>
+
+    <!-- Conteúdo em Duas Colunas -->
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
+
+      <!-- Coluna Esquerda: Instâncias e Regras (7 cols) -->
+      <section class="lg:col-span-7 space-y-6">
+        
+        <!-- Header da Seção com Botão Nova Instância -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Instâncias de Jogos</h2>
+            <p class="text-xs text-zinc-400">Gerencie conexões para cada transmissão</p>
+          </div>
+          <button onclick="abrirModalNovaInstancia()" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+            + Nova Instância
+          </button>
+        </div>
+
+        <!-- Lista de Cards de Instâncias -->
+        <div id="listaInstancias" class="space-y-4">
+          <!-- Renderizado via JS -->
+        </div>
+
+        <!-- Editor de Regras da Instância Selecionada -->
+        <div id="cardRegras" class="hidden bg-dark-800 border border-zinc-800 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-700/50 pb-3">
+            <h3 class="text-sm font-bold text-white">⚙️ Regras de Pontuação: <span id="regraInstanciaNome" class="text-brand-500"></span></h3>
+            <button onclick="salvarRegras()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md font-medium transition">
+              Salvar Alterações
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-dark-850 p-3 rounded-lg border border-zinc-700/40">
+              <label class="block text-zinc-400 mb-1">Pts / Comentário</label>
+              <input id="inputPtsComentario" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white">
+            </div>
+            <div class="bg-dark-850 p-3 rounded-lg border border-zinc-700/40">
+              <label class="block text-zinc-400 mb-1">Pts / Curtida</label>
+              <input id="inputPtsLike" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white">
+            </div>
+            <div class="bg-dark-850 p-3 rounded-lg border border-zinc-700/40">
+              <label class="block text-zinc-400 mb-1">Pts / Follow</label>
+              <input id="inputPtsFollow" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white">
+            </div>
+            <div class="bg-dark-850 p-3 rounded-lg border border-zinc-700/40">
+              <label class="block text-zinc-400 mb-1">Pts / Share</label>
+              <input id="inputPtsShare" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white">
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Coluna Direita: Terminal de Logs e Simulador (5 cols) -->
+      <section class="lg:col-span-5 flex flex-col space-y-4">
+        
+        <!-- Simulador de Eventos -->
+        <div class="bg-dark-800 border border-zinc-800 rounded-xl p-4">
+          <h3 class="text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3">🧪 Simulador (Teste sem Live)</h3>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <button onclick="simular('LIKE')" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 py-2 rounded font-medium transition">
+              ❤️ +1 Like
+            </button>
+            <button onclick="simular('COMENTARIO')" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 py-2 rounded font-medium transition">
+              💬 Comentário
+            </button>
+            <button onclick="simular('PRESENTE')" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 py-2 rounded font-medium transition">
+              🌹 Rosa (Gift)
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal de Logs em Tempo Real -->
+        <div class="flex-1 bg-dark-850 border border-zinc-800 rounded-xl flex flex-col min-h-[380px] overflow-hidden">
+          <div class="bg-zinc-900 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs">
+            <span class="font-mono text-zinc-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Feed (SSE)
+            </span>
+            <button onclick="limparTerminal()" class="text-zinc-500 hover:text-zinc-300">Limpar</button>
+          </div>
+
+          <div id="terminalLogs" class="flex-1 p-3 font-mono text-[11px] space-y-1.5 overflow-y-auto">
+            <div class="text-zinc-500">// Aguardando eventos da transmissão...</div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal Nova Instancia -->
+  <div id="modalNovaInstancia" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-4">
+    <div class="bg-dark-800 border border-zinc-700 w-full max-w-sm rounded-xl p-5 space-y-4">
+      <h3 class="text-sm font-bold text-white">Criar Nova Instância de Jogo</h3>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Nome de Identificação</label>
+        <input id="novoNomeInstancia" type="text" placeholder="Ex: Roblox Palco Principal" class="w-full bg-dark-850 border border-zinc-700 rounded px-3 py-2 text-sm text-white">
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">TikTok Username (sem @)</label>
+        <input id="novoUserTikTok" type="text" placeholder="Ex: seunome" class="w-full bg-dark-850 border border-zinc-700 rounded px-3 py-2 text-sm text-white">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="fecharModalNovaInstancia()" class="text-xs px-3 py-2 text-zinc-400 hover:text-white">Cancelar</button>
+        <button onclick="criarInstancia()" class="text-xs bg-brand-600 hover:bg-brand-500 text-white font-semibold px-4 py-2 rounded">Criar Instância</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Lógico do Dashboard -->
+  <script>
+    const API_URL = '/api';
+    let token = localStorage.getItem('token');
+    let instancias = [];
+    let instanciaSelecionada = null;
+
+    // Inicialização
+    if (token) {
+      iniciarDashboard();
+    }
+
+    // Formulário de Login
+    document.getElementById('formLogin').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const senha = document.getElementById('loginSenha').value;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.erro || 'Erro ao conectar');
+
+        token = data.token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('adminEmail', data.email);
+        iniciarDashboard();
+      } catch (err) {
+        const el = document.getElementById('erroLogin');
+        el.innerText = err.message;
+        el.classList.remove('hidden');
+      }
+    };
+
+    function logout() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    async function iniciarDashboard() {
+      document.getElementById('telaLogin').classList.add('hidden');
+      document.getElementById('painelPrincipal').classList.remove('hidden');
+      document.getElementById('labelAdminEmail').innerText = localStorage.getItem('adminEmail') || 'Admin';
+
+      await carregarInstancias();
+      iniciarSSE();
+    }
+
+    async function carregarInstancias() {
+      const res = await fetch(`${API_URL}/admin/instancias`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      instancias = await res.json();
+      renderizarInstancias();
+    }
+
+    function renderizarInstancias() {
+      const container = document.getElementById('listaInstancias');
+      container.innerHTML = '';
+
+      if (instancias.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-xl">Nenhuma instância cadastrada. Clique em "+ Nova Instância" para começar.</div>`;
+        return;
+      }
+
+      instancias.forEach((inst) => {
+        const isOnline = inst.statusTempoReal === 'ONLINE';
+        const card = document.createElement('div');
+        card.className = "bg-dark-800 border border-zinc-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4";
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'}"></span>
+              <h4 class="font-bold text-sm text-white">${inst.nome}</h4>
+              <span class="text-xs text-zinc-400">(@${inst.tiktokUsername})</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-400 font-mono">
+              <span>Key: ${inst.apiKey.substring(0, 13)}...</span>
+              <button onclick="copiarKey('${inst.apiKey}')" class="text-brand-500 hover:underline">Copiar</button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="selecionarRegras('${inst.id}')" class="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-3 py-1.5 rounded-lg transition">Regras</button>
+            ${isOnline 
+              ? `<button onclick="pararLive('${inst.id}')" class="text-xs bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg transition">Desconectar</button>`
+              : `<button onclick="iniciarLive('${inst.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg transition">Ligar Live</button>`
+            }
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Seleciona a primeira instância como padrão caso não tenha nenhuma selecionada
+      if (!instanciaSelecionada && instancias.length > 0) {
+        selecionarRegras(instancias[0].id);
+      }
+    }
+
+    function copiarKey(key) {
+      navigator.clipboard.writeText(key);
+      alert('API Key copiada para a área de transferência!');
+    }
+
+    function selecionarRegras(id) {
+      instanciaSelecionada = instancias.find(i => i.id === id);
+      if (!instanciaSelecionada) return;
+
+      document.getElementById('cardRegras').classList.remove('hidden');
+      document.getElementById('regraInstanciaNome').innerText = instanciaSelecionada.nome;
+
+      const r = instanciaSelecionada.regra || {};
+      document.getElementById('inputPtsComentario').value = r.pontosPorComentario || 5;
+      document.getElementById('inputPtsLike').value = r.pontosPorLike || 1;
+      document.getElementById('inputPtsFollow').value = r.pontosPorFollow || 50;
+      document.getElementById('inputPtsShare').value = r.pontosPorShare || 20;
+    }
+
+    async function salvarRegras() {
+      if (!instanciaSelecionada) return;
+
+      const payload = {
+        pontosPorComentario: document.getElementById('inputPtsComentario').value,
+        pontosPorLike: document.getElementById('inputPtsLike').value,
+        pontosPorFollow: document.getElementById('inputPtsFollow').value,
+        pontosPorShare: document.getElementById('inputPtsShare').value,
+      };
+
+      await fetch(`${API_URL}/admin/instancias/${instanciaSelecionada.id}/regras`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+
+      alert('Regras atualizadas com sucesso!');
+      await carregarInstancias();
+    }
+
+    async function iniciarLive(id) {
+      await fetch(`${API_URL}/admin/instancias/${id}/iniciar`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      await carregarInstancias();
+    }
+
+    async function pararLive(id) {
+      await fetch(`${API_URL}/admin/instancias/${id}/parar`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      await carregarInstancias();
+    }
+
+    // Modal
+    function abrirModalNovaInstancia() { document.getElementById('modalNovaInstancia').classList.replace('hidden', 'flex'); }
+    function fecharModalNovaInstancia() { document.getElementById('modalNovaInstancia').classList.replace('flex', 'hidden'); }
+
+    async function criarInstancia() {
+      const nome = document.getElementById('novoNomeInstancia').value;
+      const tiktokUsername = document.getElementById('novoUserTikTok').value;
+      if (!nome || !tiktokUsername) return alert('Preencha todos os campos.');
+
+      await fetch(`${API_URL}/admin/instancias`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ nome, tiktokUsername })
+      });
+
+      fecharModalNovaInstancia();
+      await carregarInstancias();
+    }
+
+    // Simulador
+    async function simular(tipo) {
+      if (!instanciaSelecionada) return alert('Selecione uma instância primeiro.');
+
+      const body = {
+        tipo,
+        usuario: 'jogador_pro',
+        comentario: tipo === 'COMENTARIO' ? 'dough_narot' : undefined,
+        giftName: tipo === 'PRESENTE' ? 'Rosa' : undefined,
+        quantidade: 1
+      };
+
+      await fetch(`${API_URL}/admin/instancias/${instanciaSelecionada.id}/simular`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+    }
+
+    // Terminal SSE
+    function iniciarSSE() {
+      const eventSource = new EventSource(`${API_URL}/admin/logs/stream`);
+      const terminal = document.getElementById('terminalLogs');
+
+      eventSource.onmessage = (e) => {
+        const log = JSON.parse(e.data);
+        const linha = document.createElement('div');
+
+        if (log.nivel === 'evento') {
+          const ev = log.evento;
+          linha.className = "text-zinc-300";
+          linha.innerHTML = `<span class="text-zinc-500">[${log.timestamp}]</span> <span class="text-brand-500 font-bold">[${ev.tipo}]</span> <span class="text-amber-400 font-semibold">${ev.usuario.apelido}</span> -> +${ev.pontos} pts (${ev.acao})`;
+        } else {
+          linha.className = log.nivel === 'erro' ? 'text-rose-400' : 'text-zinc-400';
+          linha.innerHTML = `<span class="text-zinc-500">[${log.timestamp}]</span> ${log.texto}`;
+        }
+
+        terminal.appendChild(linha);
+        terminal.scrollTop = terminal.scrollHeight;
+      };
+    }
+
+    function limparTerminal() {
+      document.getElementById('terminalLogs').innerHTML = '';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  senha     String
+  criadoEm  DateTime @default(now())
+
+  @@map("admins")
+}
+
+model Instancia {
+  id             String    @id @default(uuid())
+  nome           String    // Ex: "Palco Roblox Principal"
+  tiktokUsername String    // Ex: "seunickdotiktok"
+  apiKey         String    @unique @default(uuid())
+  status         String    @default("OFFLINE")
+  criadoEm       DateTime  @default(now())
+  atualizadoEm   DateTime  @updatedAt
+
+  regra          RegraInstancia?
+
+  @@map("instancias")
+}
+
+model RegraInstancia {
+  id                  String    @id @default(uuid())
+  instanciaId         String    @unique
+  instancia           Instancia @relation(fields: [instanciaId], references: [id], onDelete: Cascade)
+
+  pontosPorComentario Int       @default(5)
+  pontosPorLike       Int       @default(1)
+  pontosPorFollow     Int       @default(50)
+  pontosPorShare      Int       @default(20)
+
+  configPresentes     Json      @default("[]")
+
+  atualizadoEm        DateTime  @updatedAt
+
+  @@map("regras_instancia")
+}
